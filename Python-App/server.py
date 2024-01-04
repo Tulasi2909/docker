@@ -8,7 +8,7 @@ def hello():
 
 @app.route('/api') 
 def api(): 
-    return '{"name":"rohit kamle"}'
+    return '{"name":"DevOpsRK"}'
   
   
   
