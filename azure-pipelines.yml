@@ -1,0 +1,49 @@
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: '35c58354-e929-45f2-ad73-9356c75c0af8'
+  imageRepository: 'pythonapp'
+  containerRegistry: 'rkacrdevopsdocker.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/Python-App/Dockerfile'
+  tag: '$(Build.BuildId)'
+  acr-url: 'rkacrdevopsdocker.azurecr.io'
+  acr-username: 'rkacrdevopsdocker'
+  acr-password: ''
+
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+    - task: AzureWebAppContainer@1
+      inputs:
+        azureSubscription: 'sub-dev(accb6dac-b557-4024-a6e3-126a2c96e215)'
+        appName: 'webapppusingazuredevops'
+        deployToSlotOrASE: true
+        resourceGroupName: 'AZURE-DEVOPS'
+        slotName: 'dev'
+        containers: '$(containerRegistry)/$(imageRepository):$(tag)'
+        appSettings: '-name DevApp -DOCKER_REGISTRY_SERVER_URL $(acr-url) -DOCKER_REGISTRY_SERVER_USERNAME $(acr-username) -DOCKER_REGISTRY_SERVER_PASSWORD $(acr-password)'
